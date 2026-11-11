@@ -42,6 +42,7 @@
    "label": "Posting Details"
   },
   {
+   "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -53,6 +54,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Now",
    "fieldname": "posting_time",
    "fieldtype": "Time",
    "in_list_view": 1,
@@ -111,7 +113,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-11-06 12:41:05.448359",
+ "modified": "2026-11-11 08:13:46.410832",
  "modified_by": "Administrator",
  "module": "X Electronics",
  "name": "Stock Entry",
