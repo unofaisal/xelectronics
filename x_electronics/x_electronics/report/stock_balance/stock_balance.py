@@ -66,7 +66,6 @@ def get_data(filters):
                 t.qty += b.qty
                 t.value += b.qty * rate
 
-    # 3. Build the rows, in item then tree order
     selected = position.get(filters.warehouse) if filters.get("warehouse") else None
 
     data = []
