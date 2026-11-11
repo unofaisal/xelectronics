@@ -4,7 +4,7 @@
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from x_electronics.doctype.stock_entry.test_stock_entry import make_item, make_stock_entry, make_test_warehouses
+from x_electronics.x_electronics.doctype.stock_entry.test_stock_entry import make_item, make_stock_entry, make_test_warehouses
 
 EXTRA_TEST_RECORD_DEPENDENCIES = []
 IGNORE_TEST_RECORD_DEPENDENCIES = []

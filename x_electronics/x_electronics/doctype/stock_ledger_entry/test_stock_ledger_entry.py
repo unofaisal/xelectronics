@@ -4,7 +4,7 @@
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from x_electronics.doctype.stock_entry.test_stock_entry import get_ledger, make_item, make_stock_entry, make_test_warehouses
+from x_electronics.x_electronics.doctype.stock_entry.test_stock_entry import get_ledger, make_item, make_stock_entry, make_test_warehouses
 
 EXTRA_TEST_RECORD_DEPENDENCIES = []
 # voucher_type links to DocType. Loading test records for it would pull in core records we don't need.

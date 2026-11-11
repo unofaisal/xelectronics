@@ -6,9 +6,6 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, get_datetime, get_time, getdate
 
-from x_electronics.stock_utils import get_valuation_rate, validate_no_negative_stock
-
-
 class StockEntry(Document):
     def validate(self):
         self.validate_warehouses()
