@@ -6,7 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, get_datetime, get_time, getdate
 
-from x_electronics.stock_utils import get_valuation_rate
+from x_electronics.stock_utils import get_valuation_rate, validate_no_negative_stock
 
 
 class StockEntry(Document):
@@ -57,12 +57,24 @@ class StockEntry(Document):
 
     def on_submit(self):
         self.make_ledger_entries()
+        self.validate_stock_levels()
 
     def on_cancel(self):
         frappe.db.delete(
             "Stock Ledger Entry",
             {"voucher_type": self.doctype, "voucher_no": self.name},
         )
+        self.validate_stock_levels()
+
+    def validate_stock_levels(self):
+        # Runs after the ledger rows are written or removed. If any item and
+        # warehouse ends up negative, this throws and Frappe rolls everything back.
+        pairs = []
+        for row in self.items:
+            for warehouse in (self.source_warehouse, self.target_warehouse):
+                if warehouse:
+                    pairs.append((row.item, warehouse))
+        validate_no_negative_stock(pairs)
 
     def get_posting_datetime(self):
         return get_datetime(f"{getdate(self.posting_date)} {get_time(self.posting_time)}")
@@ -99,3 +111,46 @@ class StockEntry(Document):
                 "voucher_detail_no": row.name,
             }
         ).insert(ignore_permissions=True)
+
+
+
+def get_stock_balance(item, warehouse, posting_datetime=None):
+    """Quantity, average rate and value of one item in one warehouse.
+
+    rate = total money received / total units received, up to posting_datetime
+    (or everything, if no time is given).
+    """
+    filters = {"item": item, "warehouse": warehouse}
+    if posting_datetime:
+        filters["posting_datetime"] = ["<=", posting_datetime]
+
+    rows = frappe.get_all(
+        "Stock Ledger Entry",
+        filters=filters,
+        fields=["actual_qty", "incoming_rate"],
+    )
+
+    qty = received_qty = received_value = 0
+    for row in rows:
+        qty += flt(row.actual_qty)
+        if flt(row.actual_qty) > 0:
+            received_qty += flt(row.actual_qty)
+            received_value += flt(row.actual_qty) * flt(row.incoming_rate)
+
+    rate = received_value / received_qty if received_qty else 0
+    return frappe._dict(qty=qty, rate=rate, value=qty * rate)
+
+
+def get_valuation_rate(item, warehouse, posting_datetime):
+    """Average rate at a point in time. Prices the incoming side of a transfer."""
+    return get_stock_balance(item, warehouse, posting_datetime).rate
+
+
+def validate_no_negative_stock(pairs):
+    """Throw if any (item, warehouse) pair ends up with negative stock."""
+    for item, warehouse in set(pairs):
+        balance = get_stock_balance(item, warehouse)
+        if balance.qty < 0:
+            frappe.throw(
+                _("Not enough stock of {0} in {1}: it would be {2}.").format(item, warehouse, balance.qty)
+            )
